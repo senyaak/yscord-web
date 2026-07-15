@@ -2,28 +2,33 @@ services:
   db:
     image: postgres:17-alpine
     environment:
-      POSTGRES_DB: todo
-      POSTGRES_USER: todo
-      POSTGRES_PASSWORD: todo
+      POSTGRES_DB: yscord
+      POSTGRES_USER: yscord
+      POSTGRES_PASSWORD: yscord
     ports:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U todo -d todo"]
+      test: ["CMD-SHELL", "pg_isready -U yscord -d yscord"]
       interval: 5s
       timeout: 5s
       retries: 10
 
   app:
+    # Use the published image if it's available, otherwise build locally.
+    # `docker compose up` pulls the image when missing and falls back to `build`;
+    # `docker compose up --build` forces a local rebuild.
+    image: ghcr.io/senyaak/yscord-web:latest
     build: .
+    pull_policy: missing
     depends_on:
       db:
         condition: service_healthy
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/todo
-      SPRING_DATASOURCE_USERNAME: todo
-      SPRING_DATASOURCE_PASSWORD: todo
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/yscord
+      SPRING_DATASOURCE_USERNAME: yscord
+      SPRING_DATASOURCE_PASSWORD: yscord
     ports:
       - "8080:8080"
     healthcheck:

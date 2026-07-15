@@ -1,0 +1,8 @@
+# Local development profile — activated automatically by `./gradlew bootRun`.
+# These are throwaway local credentials; production never uses this file and must
+# get its datasource from the environment instead.
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/yscord
+    username: yscord
+    password: yscord

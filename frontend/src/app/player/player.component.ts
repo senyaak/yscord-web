@@ -1,15 +1,14 @@
-import { Component, effect, ElementRef, inject, viewChild } from '@angular/core';
+import { Component, effect, ElementRef, inject, OnDestroy, signal, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { LoopMode } from './player.models';
 import { PlayerStore } from './player.store';
 
 /**
- * The web reincarnation of the bot's Discord panel (`src/panel.js`): a "now
- * playing" block with a seekable progress bar, Up next / Volume / Loop fields,
- * the same control rows, and a full queue with per-track manage actions.
- *
- * The component owns the DOM side of playback — a single hidden <audio> element —
- * and keeps it in lockstep with the DOM-free PlayerStore via three small effects.
+ * The shared jukebox panel. The server owns the session; this component renders it
+ * and keeps the local <audio> element in lockstep with the authoritative state —
+ * loading the current track, seeking to the extrapolated live position, and
+ * mirroring play/pause. Because browsers block autoplay without a gesture, a tab
+ * that should be playing but was refused shows a "join" prompt (one click).
  */
 @Component({
   selector: 'app-player',
@@ -17,85 +16,103 @@ import { PlayerStore } from './player.store';
   templateUrl: './player.component.html',
   styleUrl: './player.component.css',
 })
-export class PlayerComponent {
-  // signalStore() returns a value whose type can't serve as a constructor DI token,
-  // so this is a legitimate inject() case (no usable constructor param form exists).
+export class PlayerComponent implements OnDestroy {
   readonly store = inject(PlayerStore);
   private readonly audio = viewChild.required<ElementRef<HTMLAudioElement>>('audio');
 
+  // Start muted: browsers allow muted autoplay, so playback runs and stays in sync
+  // from the first second — a click just unmutes (a gesture that permits sound).
+  readonly muted = signal(true);
   query = '';
-  // In-effect tracking var — a plain field, not a signal, per the "signals sparingly" rule.
+
+  // In-effect tracking var — plain field, per the "signals sparingly" rule.
   private loadedId: string | null = null;
+  private readonly ticker: ReturnType<typeof setInterval>;
+  private static readonly SYNC_THRESHOLD_SEC = 1.5;
 
   constructor() {
-    // 1) Point <audio> at the current track's stream whenever the track changes.
-    effect(() => {
-      const id = this.store.current()?.id ?? null;
-      const el = this.audio().nativeElement;
-      if (id === this.loadedId) return;
-      this.loadedId = id;
-      if (id) {
-        el.src = `/api/stream/${id}`;
-        el.load();
-      } else {
-        el.removeAttribute('src');
-        el.load();
-      }
-    });
+    // Drive the displayed position from the shared anchor (not the local <audio>),
+    // so time advances identically in every tab regardless of local buffering/mute.
+    this.ticker = setInterval(() => {
+      this.store.setElapsed(this.store.targetPosition());
+    }, 250);
 
-    // 2) Reflect play/pause intent onto the element.
+    // Keep <audio> in sync with the authoritative session on every server update.
     effect(() => {
+      const track = this.store.current();
       const playing = this.store.playing();
+      this.store.anchorEpochMs(); // dep: re-sync on a new anchor (seek / track / resume)
+      this.store.positionSec(); // dep
       const el = this.audio().nativeElement;
-      if (!this.store.current()) return;
+      const id = track?.id ?? null;
+
+      if (id !== this.loadedId) {
+        this.loadedId = id;
+        if (id) {
+          el.src = `/api/stream/${id}`;
+          el.load();
+        } else {
+          el.removeAttribute('src');
+          el.load();
+        }
+      }
+      if (!id) return;
+
+      const target = this.store.targetPosition();
+      if (Math.abs(el.currentTime - target) > PlayerComponent.SYNC_THRESHOLD_SEC) {
+        try {
+          el.currentTime = target;
+        } catch {
+          // seek before metadata is ready — the next sync will catch it
+        }
+      }
+
+      el.muted = this.muted(); // dep: re-applies when the user unmutes
       if (playing) el.play().catch(() => {});
       else el.pause();
     });
 
-    // 3) Reflect volume.
+    // Local volume.
     effect(() => {
       this.audio().nativeElement.volume = this.store.volume();
     });
   }
 
-  // ---- input box ----
   submit(): void {
     const q = this.query;
     this.query = '';
     this.store.add(q);
   }
 
-  // ---- <audio> events → store ----
-  onTime(): void {
-    this.store.setElapsed(this.audio().nativeElement.currentTime);
-  }
-  onEnded(): void {
+  /** One click enables sound for this tab (a gesture that lifts the autoplay block). */
+  unmute(): void {
     const el = this.audio().nativeElement;
-    if (this.store.loop() === 'track') {
-      el.currentTime = 0;
-      el.play().catch(() => {});
-      return;
-    }
-    this.store.next();
+    el.muted = false;
+    this.muted.set(false);
+    el.play().catch(() => {});
   }
+
+  /**
+   * Any interaction in this tab is a user gesture, so sound is allowed — drop the
+   * mute. This means playback the user starts here is never silent; only a passive
+   * tab (playing pushed by the server, no local click) stays muted until clicked.
+   */
+  onInteract(): void {
+    if (this.muted()) this.muted.set(false);
+  }
+
+  ngOnDestroy(): void {
+    clearInterval(this.ticker);
+  }
+
+  // ---- <audio> events → store ----
   onError(): void {
     if (this.store.current()) this.store.setError('Playback failed — check the backend log.');
   }
 
   // ---- transport ----
   seek(event: Event): void {
-    const value = Number((event.target as HTMLInputElement).value);
-    this.audio().nativeElement.currentTime = value;
-    this.store.setElapsed(value);
-  }
-  prev(): void {
-    // Standard behaviour: restart if we're >3s in or there's nothing before us.
-    if (this.store.elapsed() > 3 || !this.store.hasPrev()) {
-      this.audio().nativeElement.currentTime = 0;
-      this.store.setElapsed(0);
-      return;
-    }
-    this.store.prev();
+    this.store.seek(Number((event.target as HTMLInputElement).value));
   }
 
   // ---- display helpers ----

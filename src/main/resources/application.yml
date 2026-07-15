@@ -1,19 +1,16 @@
 spring:
   application:
-    name: todo
+    name: yscord
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/todo}
-    username: ${SPRING_DATASOURCE_USERNAME:todo}
-    password: ${SPRING_DATASOURCE_PASSWORD:todo}
-  jpa:
-    open-in-view: false
-    hibernate:
-      # For a demo, let Hibernate manage the schema. In production swap this for
-      # Flyway/Liquibase migrations and set ddl-auto=validate.
-      ddl-auto: update
-    properties:
-      hibernate:
-        format_sql: true
+    # No defaults on purpose: a missing env var must fail fast, never silently
+    # connect with a weak baked-in credential. Local dev values live in the `dev`
+    # profile (application-dev.yml); Docker/prod supply these via the environment.
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+
+# Schema is owned by the Exposed MigrationRunner (see de.yscord.player.db), applied
+# on startup. Run with `--db.rollback=N` to revert the last N migrations.
 
 player:
   # Path to the yt-dlp binary (defaults to whatever is on PATH).

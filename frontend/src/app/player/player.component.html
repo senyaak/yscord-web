@@ -1,15 +1,13 @@
-<!-- Hidden audio element: the actual playback engine, driven by the store. -->
+<!-- Hidden audio element: the local playback engine, synced to the shared session. -->
 <audio
   #audio
-  (timeupdate)="onTime()"
-  (ended)="onEnded()"
   (waiting)="store.setBuffering(true)"
   (playing)="store.setBuffering(false)"
   (canplay)="store.setBuffering(false)"
   (error)="onError()"
 ></audio>
 
-<div class="panel">
+<div class="panel" (pointerdown)="onInteract()">
   <!-- Add box -->
   <form class="add" (submit)="$event.preventDefault(); submit()">
     <input
@@ -18,8 +16,8 @@
       placeholder="Paste a YouTube link or type to search…"
       autocomplete="off"
     />
-    <button type="submit" [disabled]="store.resolving()">
-      {{ store.resolving() ? '…' : '➕ Add' }}
+    <button type="submit" [disabled]="store.pending()">
+      {{ store.pending() ? '…' : '➕ Add' }}
     </button>
   </form>
 
@@ -27,9 +25,17 @@
     <div class="error" (click)="store.clearError()">⚠️ {{ err }} <span class="dismiss">✕</span></div>
   }
 
+  <!-- Playing muted (autoplay policy) — position stays in sync; one click unmutes. -->
+  @if (muted() && store.playing()) {
+    <div class="join" (click)="unmute()">🔇 Playing muted — click to unmute</div>
+  }
+
   <!-- Embed-style card -->
   <div class="embed" [class.idle]="store.status() === 'idle'">
-    <div class="embed-title">🎛️ yscord panel</div>
+    <div class="embed-title">
+      🎛️ yscord panel
+      <span class="conn" [class.on]="store.connected()" [title]="store.connected() ? 'live' : 'reconnecting…'"></span>
+    </div>
 
     @if (store.current(); as track) {
       <div class="now">
@@ -52,7 +58,7 @@
                 min="0"
                 [max]="track.duration"
                 [value]="store.elapsed()"
-                (input)="seek($event)"
+                (change)="seek($event)"
               />
               <div class="times">
                 <span>{{ clock(store.elapsed()) }}</span>
@@ -77,7 +83,7 @@
 
     <!-- Control row 1: playback -->
     <div class="controls">
-      <button title="Previous" [disabled]="!store.current()" (click)="prev()">⏮️</button>
+      <button title="Previous" [disabled]="!store.current()" (click)="store.prev()">⏮️</button>
       <button
         class="primary"
         title="Play / Pause"

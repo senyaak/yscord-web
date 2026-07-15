@@ -86,6 +86,35 @@ button:not(:disabled):active {
 .embed-title {
   font-weight: 700;
   margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.conn {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--danger);
+  transition: background 0.3s;
+}
+.conn.on {
+  background: #23a55a;
+}
+
+/* Autoplay-blocked prompt: one click joins the shared playback. */
+.join {
+  background: var(--blurple);
+  color: #fff;
+  text-align: center;
+  padding: 10px 12px;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  cursor: pointer;
+  font-weight: 600;
+  user-select: none;
+}
+.join:hover {
+  filter: brightness(1.1);
 }
 
 .now {
