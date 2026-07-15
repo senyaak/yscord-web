@@ -1,0 +1,29 @@
+### List all todos
+GET http://localhost:8080/api/todos
+
+### Create a todo
+POST http://localhost:8080/api/todos
+Content-Type: application/json
+
+{ "title": "Buy milk", "description": "2 liters" }
+
+### Get one
+GET http://localhost:8080/api/todos/1
+
+### Update
+PUT http://localhost:8080/api/todos/1
+Content-Type: application/json
+
+{ "title": "Buy milk", "description": "done", "completed": true }
+
+### Delete
+DELETE http://localhost:8080/api/todos/1
+
+### Validation error (blank title)
+POST http://localhost:8080/api/todos
+Content-Type: application/json
+
+{ "title": "" }
+
+### Health
+GET http://localhost:8080/actuator/health

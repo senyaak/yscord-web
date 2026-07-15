@@ -1,0 +1,121 @@
+<!-- Hidden audio element: the actual playback engine, driven by the store. -->
+<audio
+  #audio
+  (timeupdate)="onTime()"
+  (ended)="onEnded()"
+  (waiting)="store.setBuffering(true)"
+  (playing)="store.setBuffering(false)"
+  (canplay)="store.setBuffering(false)"
+  (error)="onError()"
+></audio>
+
+<div class="panel">
+  <!-- Add box -->
+  <form class="add" (submit)="$event.preventDefault(); submit()">
+    <input
+      name="query"
+      [(ngModel)]="query"
+      placeholder="Paste a YouTube link or type to search…"
+      autocomplete="off"
+    />
+    <button type="submit" [disabled]="store.resolving()">
+      {{ store.resolving() ? '…' : '➕ Add' }}
+    </button>
+  </form>
+
+  @if (store.error(); as err) {
+    <div class="error" (click)="store.clearError()">⚠️ {{ err }} <span class="dismiss">✕</span></div>
+  }
+
+  <!-- Embed-style card -->
+  <div class="embed" [class.idle]="store.status() === 'idle'">
+    <div class="embed-title">🎛️ yscord panel</div>
+
+    @if (store.current(); as track) {
+      <div class="now">
+        @if (track.thumbnail) {
+          <img class="thumb" [src]="track.thumbnail" alt="" />
+        }
+        <div class="now-body">
+          <div class="now-title">
+            {{ store.status() === 'loading' ? '⏳' : store.status() === 'paused' ? '⏸️' : '🎶' }}
+            <a [href]="track.webpageUrl" target="_blank" rel="noopener">{{ track.title }}</a>
+          </div>
+          @if (track.uploader) {
+            <div class="now-sub">{{ track.uploader }}</div>
+          }
+
+          @if (track.duration > 0) {
+            <div class="progress">
+              <input
+                type="range"
+                min="0"
+                [max]="track.duration"
+                [value]="store.elapsed()"
+                (input)="seek($event)"
+              />
+              <div class="times">
+                <span>{{ clock(store.elapsed()) }}</span>
+                <span>{{ clock(track.duration) }}</span>
+              </div>
+            </div>
+          } @else {
+            <div class="live">🔴 LIVE · {{ clock(store.elapsed()) }}</div>
+          }
+        </div>
+      </div>
+    } @else {
+      <div class="empty">Nothing is playing. Add a link and the panel comes alive.</div>
+    }
+
+    <!-- Fields row -->
+    <div class="fields">
+      <div class="field"><span>Up next</span><b>{{ store.upcoming() }}</b></div>
+      <div class="field"><span>Volume</span><b>{{ store.volumePercent() }}%</b></div>
+      <div class="field"><span>Loop</span><b>{{ loopLabel(store.loop()) }}</b></div>
+    </div>
+
+    <!-- Control row 1: playback -->
+    <div class="controls">
+      <button title="Previous" [disabled]="!store.current()" (click)="prev()">⏮️</button>
+      <button
+        class="primary"
+        title="Play / Pause"
+        [disabled]="!store.current()"
+        (click)="store.togglePlay()"
+      >
+        {{ store.status() === 'playing' ? '⏸️' : '▶️' }}
+      </button>
+      <button title="Skip" [disabled]="!store.hasNext() && store.loop() === 'off'" (click)="store.next()">⏭️</button>
+      <button class="danger" title="Stop" [disabled]="!store.current()" (click)="store.stop()">⏹️</button>
+    </div>
+
+    <!-- Control row 2: volume & queue modes -->
+    <div class="controls">
+      <button title="Volume down" (click)="store.volumeDown()">🔉</button>
+      <button title="Volume up" (click)="store.volumeUp()">🔊</button>
+      <button title="Loop mode" (click)="store.cycleLoop()">🔁 Loop</button>
+      <button title="Shuffle" [disabled]="!store.hasQueue()" (click)="store.shuffle()">🔀 Shuffle</button>
+    </div>
+  </div>
+
+  <!-- Queue -->
+  @if (store.hasQueue()) {
+    <div class="queue">
+      <div class="queue-head">Queue ({{ store.index() + 1 }}/{{ store.tracks().length }})</div>
+      @for (track of store.tracks(); track track.id + '_' + $index; let i = $index) {
+        <div class="row" [class.current]="i === store.index()">
+          <span class="num">{{ i === store.index() ? '▶' : i + 1 }}</span>
+          <span class="rtitle" (click)="store.playAt(i)">{{ track.title }}</span>
+          <span class="rdur">{{ track.duration > 0 ? clock(track.duration) : 'LIVE' }}</span>
+          <span class="actions">
+            <button title="Play now" (click)="store.playAt(i)">▶️</button>
+            <button title="Move up" [disabled]="i === 0" (click)="store.move(i, -1)">⬆️</button>
+            <button title="Move down" [disabled]="i === store.tracks().length - 1" (click)="store.move(i, 1)">⬇️</button>
+            <button class="danger" title="Remove" (click)="store.removeAt(i)">🗑️</button>
+          </span>
+        </div>
+      }
+    </div>
+  }
+</div>

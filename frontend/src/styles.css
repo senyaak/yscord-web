@@ -1,0 +1,28 @@
+/* Global styles — Discord-like dark shell. */
+* {
+  box-sizing: border-box;
+}
+html,
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: #313338;
+  color: #dbdee1;
+  font-family: 'gg sans', 'Segoe UI', system-ui, sans-serif;
+}
+.app-header {
+  text-align: center;
+  padding: 28px 16px 8px;
+}
+.app-header h1 {
+  margin: 0;
+  font-size: 26px;
+}
+.app-header p {
+  margin: 6px 0 0;
+  color: #949ba4;
+  font-size: 14px;
+}
+main {
+  padding: 20px 16px 60px;
+}

@@ -1,0 +1,32 @@
+spring:
+  application:
+    name: todo
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/todo}
+    username: ${SPRING_DATASOURCE_USERNAME:todo}
+    password: ${SPRING_DATASOURCE_PASSWORD:todo}
+  jpa:
+    open-in-view: false
+    hibernate:
+      # For a demo, let Hibernate manage the schema. In production swap this for
+      # Flyway/Liquibase migrations and set ddl-auto=validate.
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: true
+
+player:
+  # Path to the yt-dlp binary (defaults to whatever is on PATH).
+  yt-dlp-path: ${PLAYER_YTDLP_PATH:yt-dlp}
+  # Where downloaded audio is cached (defaults to a temp subdir).
+  cache-dir: ${PLAYER_CACHE_DIR:${java.io.tmpdir}/yscord-audio}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true

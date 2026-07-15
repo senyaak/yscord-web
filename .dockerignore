@@ -1,0 +1,15 @@
+.git
+.gitignore
+.github
+.gradle
+build
+*.md
+.idea
+.vscode
+
+# Frontend: node_modules/build output are regenerated inside the image; never ship
+# host binaries or the generated SPA into the build context.
+frontend/node_modules
+frontend/.angular
+frontend/dist
+src/main/resources/static

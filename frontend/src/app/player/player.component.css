@@ -1,0 +1,252 @@
+:host {
+  --blurple: #5865f2;
+  --bg: #313338;
+  --card: #2b2d31;
+  --embed: #232428;
+  --text: #dbdee1;
+  --muted: #949ba4;
+  --danger: #da373c;
+  display: block;
+  max-width: 560px;
+  margin: 0 auto;
+  color: var(--text);
+  font-family: 'gg sans', 'Segoe UI', system-ui, sans-serif;
+}
+
+/* ---- add box ---- */
+.add {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.add input {
+  flex: 1;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: none;
+  background: var(--card);
+  color: var(--text);
+  font-size: 14px;
+}
+.add input:focus {
+  outline: 2px solid var(--blurple);
+}
+.add button,
+.controls button,
+.actions button {
+  border: none;
+  border-radius: 8px;
+  background: #4e5058;
+  color: var(--text);
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.15s, transform 0.05s;
+}
+.add button {
+  padding: 10px 16px;
+  background: var(--blurple);
+  font-weight: 600;
+}
+button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+button:not(:disabled):hover {
+  filter: brightness(1.15);
+}
+button:not(:disabled):active {
+  transform: translateY(1px);
+}
+
+.error {
+  background: rgba(218, 55, 60, 0.15);
+  border: 1px solid var(--danger);
+  color: #f5c2c4;
+  padding: 8px 12px;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  cursor: pointer;
+  font-size: 13px;
+}
+.error .dismiss {
+  float: right;
+  opacity: 0.7;
+}
+
+/* ---- embed card ---- */
+.embed {
+  background: var(--embed);
+  border-left: 4px solid var(--blurple);
+  border-radius: 6px;
+  padding: 16px;
+}
+.embed.idle {
+  border-left-color: #4f545c;
+}
+.embed-title {
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+.now {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.thumb {
+  width: 88px;
+  height: 66px;
+  object-fit: cover;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+.now-body {
+  flex: 1;
+  min-width: 0;
+}
+.now-title {
+  font-weight: 600;
+  line-height: 1.3;
+}
+.now-title a {
+  color: var(--text);
+  text-decoration: none;
+}
+.now-title a:hover {
+  text-decoration: underline;
+}
+.now-sub {
+  color: var(--muted);
+  font-size: 12px;
+  margin: 2px 0 8px;
+}
+.empty {
+  color: var(--muted);
+  font-style: italic;
+  margin-bottom: 14px;
+}
+
+.progress input[type='range'] {
+  width: 100%;
+  accent-color: var(--blurple);
+  cursor: pointer;
+}
+.live {
+  color: #f23f43;
+  font-weight: 600;
+  font-size: 13px;
+}
+.times {
+  display: flex;
+  justify-content: space-between;
+  color: var(--muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.fields {
+  display: flex;
+  gap: 8px;
+  margin: 4px 0 14px;
+}
+.field {
+  flex: 1;
+  background: var(--card);
+  border-radius: 6px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.field span {
+  color: var(--muted);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+.field b {
+  font-size: 14px;
+}
+
+.controls {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.controls button {
+  flex: 1;
+  padding: 10px 0;
+}
+.controls button.primary {
+  background: #248046;
+  flex: 1.4;
+}
+.controls button.danger {
+  background: var(--danger);
+}
+
+/* ---- queue ---- */
+.queue {
+  margin-top: 14px;
+  background: var(--card);
+  border-radius: 8px;
+  padding: 8px;
+}
+.queue-head {
+  color: var(--muted);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  padding: 4px 6px 8px;
+}
+.row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px;
+  border-radius: 6px;
+  font-size: 13px;
+}
+.row:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+.row.current {
+  background: rgba(88, 101, 242, 0.15);
+  font-weight: 600;
+}
+.num {
+  width: 22px;
+  text-align: center;
+  color: var(--muted);
+  flex-shrink: 0;
+}
+.row.current .num {
+  color: var(--blurple);
+}
+.rtitle {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.rdur {
+  color: var(--muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+.actions {
+  display: flex;
+  gap: 2px;
+  flex-shrink: 0;
+}
+.actions button {
+  padding: 4px 6px;
+  background: transparent;
+  font-size: 13px;
+}
+.actions button.danger:hover {
+  background: var(--danger);
+}
