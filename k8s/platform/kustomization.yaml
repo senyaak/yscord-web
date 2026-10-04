@@ -1,0 +1,10 @@
+# Cluster infrastructure shared by all apps (entry point today; monitoring and
+# Kafka later). Applied separately from the app: kubectl apply -k k8s/platform
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - envoyproxy.yaml
+  - gatewayclass.yaml
+  - gateway.yaml
+  - cloudflared.yaml
