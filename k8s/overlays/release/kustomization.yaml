@@ -1,0 +1,13 @@
+# Release: the image CI built and tested, pulled from GHCR.
+# The tag is pinned to a commit (never "latest"), so every apply is reproducible
+# and a rollback is just pointing back at the previous sha.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../../base
+
+images:
+  - name: yscord
+    newName: ghcr.io/senyaak/yscord-web
+    newTag: sha-dcccc07

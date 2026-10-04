@@ -1,0 +1,14 @@
+# Local development: the image is built on the host and pushed into minikube with
+#   docker build -t yscord:dev . && minikube image load yscord:dev
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../../base
+
+images:
+  # A non-"latest" tag defaults to imagePullPolicy IfNotPresent, so the kubelet
+  # uses the loaded image instead of trying (and failing) to pull it.
+  - name: yscord
+    newName: yscord
+    newTag: dev
