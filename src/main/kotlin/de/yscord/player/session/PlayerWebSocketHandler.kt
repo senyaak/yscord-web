@@ -2,6 +2,7 @@ package de.yscord.player.session
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
+import de.yscord.player.YtDlpException
 import org.slf4j.LoggerFactory
 import org.springframework.context.event.EventListener
 import org.springframework.stereotype.Component
@@ -33,12 +34,21 @@ class PlayerWebSocketHandler(private val service: PlayerSessionService) : TextWe
         } catch (e: Exception) {
             return
         }
-        try {
+        // Failures go to the requester only. Only our own exception types carry
+        // messages written for users; anything else (DB, bugs) is logged and
+        // answered with a fixed text so internals never leak to the client.
+        val error = try {
             service.handle(cmd)
+            null
+        } catch (e: YtDlpException) {
+            e.message
+        } catch (e: IllegalArgumentException) {
+            e.message
         } catch (e: Exception) {
-            // e.g. a yt-dlp failure on `add` — report to the requester only.
-            trySend(session, """{"error":${mapper.writeValueAsString(e.message ?: "error")}}""")
+            log.error("command {} failed", cmd.type, e)
+            "Something went wrong."
         }
+        if (error != null) trySend(session, """{"error":${mapper.writeValueAsString(error)}}""")
     }
 
     override fun afterConnectionClosed(session: WebSocketSession, status: CloseStatus) {

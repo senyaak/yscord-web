@@ -2,8 +2,11 @@ package de.yscord.player
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
+import java.net.URI
+import java.net.URISyntaxException
 import java.util.concurrent.TimeUnit
 
 /** Metadata for one resolved track — the HTTP-facing shape the frontend consumes. */
@@ -32,15 +35,14 @@ class YtDlpService(
     // Only used to parse yt-dlp's JSON output — a plain mapper is enough and keeps
     // the service free of a bean that Boot 4.1 no longer exposes by default.
     private val objectMapper = ObjectMapper()
-    private val urlRegex = Regex("^https?://", RegexOption.IGNORE_CASE)
+    private val log = LoggerFactory.getLogger(javaClass)
 
     /**
      * Resolves a link OR free-text search into a single track's metadata.
      * `yt-dlp -j` prints one JSON object per line; on a search we take the first.
      */
     fun resolve(query: String): TrackInfo {
-        val trimmed = query.trim()
-        val target = if (urlRegex.containsMatchIn(trimmed)) trimmed else "ytsearch1:$trimmed"
+        val target = toTarget(query)
 
         val result = run(
             "-j",
@@ -55,7 +57,8 @@ class YtDlpService(
         val info: JsonNode = try {
             objectMapper.readTree(firstLine)
         } catch (e: Exception) {
-            throw YtDlpException("Cannot parse yt-dlp output: ${e.message}")
+            log.warn("cannot parse yt-dlp output", e)
+            throw YtDlpException(GENERIC_ERROR)
         }
 
         val id = info.get("id")?.asText()
@@ -75,7 +78,8 @@ class YtDlpService(
         val proc = try {
             ProcessBuilder(listOf(ytDlpPath) + args).start()
         } catch (e: Exception) {
-            throw YtDlpException("Cannot start yt-dlp: ${e.message}")
+            log.error("cannot start yt-dlp at {}", ytDlpPath, e)
+            throw YtDlpException(GENERIC_ERROR)
         }
         val stdout = proc.inputStream.bufferedReader().readText()
         val stderr = proc.errorStream.bufferedReader().readText()
@@ -106,7 +110,45 @@ class YtDlpService(
             "unsupported url" in s -> "Unrecognized link."
             Regex("unable to (extract|download)|http error 4|http error 5|nsig|player.*signature").containsMatchIn(s) ->
                 "YouTube won't serve this — yt-dlp is probably stale. Update it (yt-dlp -U)."
-            else -> raw.trim().ifBlank { "unknown yt-dlp error" }
+            // Never echo raw stderr: it carries hostnames, ports and connection
+            // errors that would let a client probe the network behind us.
+            else -> {
+                log.warn("unmapped yt-dlp error: {}", raw.trim())
+                GENERIC_ERROR
+            }
         }
+    }
+
+    /**
+     * Turns user input into a yt-dlp target: free text becomes a YouTube search,
+     * a link must point at YouTube. yt-dlp happily fetches ANY URL (its generic
+     * extractor), so without this check a client could make the server request
+     * hosts on our LAN or inside the cluster (SSRF).
+     *
+     * Interim guard: the network-level fix is an egress NetworkPolicy.
+     */
+    fun toTarget(query: String): String {
+        val trimmed = query.trim()
+        require(trimmed.isNotEmpty()) { "Empty query." }
+        if (!trimmed.contains("://")) return "ytsearch1:$trimmed"
+
+        val uri = try {
+            URI(trimmed)
+        } catch (e: URISyntaxException) {
+            throw IllegalArgumentException(ONLY_YOUTUBE)
+        }
+        val scheme = uri.scheme?.lowercase()
+        val host = uri.host?.lowercase()
+        require((scheme == "http" || scheme == "https") && host in YOUTUBE_HOSTS) { ONLY_YOUTUBE }
+        return uri.toString()
+    }
+
+    companion object {
+        const val GENERIC_ERROR = "Could not load this track."
+        const val ONLY_YOUTUBE = "Only YouTube links are supported."
+
+        private val YOUTUBE_HOSTS = setOf(
+            "youtube.com", "www.youtube.com", "m.youtube.com", "music.youtube.com", "youtu.be",
+        )
     }
 }
