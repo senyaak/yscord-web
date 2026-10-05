@@ -23,10 +23,14 @@ FROM eclipse-temurin:21-jre AS runtime
 WORKDIR /app
 
 # yt-dlp standalone linux build — bundles its own Python, so no extra runtime deps.
-# Grab the latest release so YouTube extraction keeps working over time.
+# Pinned so a commit always builds the same image; Renovate opens a PR when a new
+# release is out (see renovate.json). The k8s init container additionally runs
+# `yt-dlp -U` at pod start as a safety net between releases.
+# renovate: datasource=github-releases depName=yt-dlp/yt-dlp
+ARG YTDLP_VERSION=2026.08.19
 RUN apt-get update \
     && apt-get install -y --no-install-recommends ca-certificates curl \
-    && curl -fsSL https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_linux \
+    && curl -fsSL https://github.com/yt-dlp/yt-dlp/releases/download/${YTDLP_VERSION}/yt-dlp_linux \
         -o /usr/local/bin/yt-dlp \
     && chmod a+rx /usr/local/bin/yt-dlp \
     && apt-get purge -y curl && apt-get autoremove -y \

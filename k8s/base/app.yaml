@@ -31,6 +31,27 @@ spec:
       labels:
         app: yscord
     spec:
+      # Runs to completion before the app starts. YouTube breaks old yt-dlp
+      # releases often, so every pod start refreshes it: copy the binary baked
+      # into the image to a shared volume, then self-update it there. If GitHub
+      # is unreachable the update fails softly and the baked version is used.
+      initContainers:
+        - name: update-yt-dlp
+          image: yscord
+          command: ["sh", "-c"]
+          args:
+            - cp /usr/local/bin/yt-dlp /tools/yt-dlp
+              && (/tools/yt-dlp -U || echo "yt-dlp update failed, keeping the baked version")
+              && /tools/yt-dlp --version
+          volumeMounts:
+            - name: tools
+              mountPath: /tools
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              memory: 128Mi
       containers:
         - name: yscord
           # Placeholder name; each overlay rewrites it to a concrete image + tag.
@@ -54,9 +75,15 @@ spec:
                   key: POSTGRES_PASSWORD
             - name: PLAYER_CACHE_DIR
               value: /cache
+            # The fresh copy prepared by the update-yt-dlp init container.
+            - name: PLAYER_YTDLP_PATH
+              value: /tools/yt-dlp
           volumeMounts:
             - name: audio-cache
               mountPath: /cache
+            - name: tools
+              mountPath: /tools
+              readOnly: true
           resources:
             requests:
               cpu: 250m
@@ -91,3 +118,7 @@ spec:
         - name: audio-cache
           emptyDir:
             sizeLimit: 1Gi
+        # Holds the refreshed yt-dlp binary (~35 MB).
+        - name: tools
+          emptyDir:
+            sizeLimit: 100Mi
