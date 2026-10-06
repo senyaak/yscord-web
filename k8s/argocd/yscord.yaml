@@ -1,8 +1,6 @@
 # Argo CD Application: keeps the yscord namespace in sync with
 # k8s/overlays/release on main. Argo pulls from git; nothing pushes into the
 # cluster, so it works behind NAT.
-#
-# No syncPolicy yet: Argo only reports drift and waits for a manual Sync.
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -18,3 +16,9 @@ spec:
     # The cluster Argo itself runs in.
     server: https://kubernetes.default.svc
     namespace: yscord
+  syncPolicy:
+    automated:
+      # Delete resources that were removed from git (only ones Argo tracks).
+      prune: true
+      # Revert manual changes in the cluster back to what git says.
+      selfHeal: true
