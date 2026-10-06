@@ -14,3 +14,8 @@ Plain SQL, applied in file-name order by `MigrationRunner`. History lives in the
    data; type changes may need `USING`; a NOT NULL column on a filled table
    needs a default or a backfill). Data moves are written by hand.
 4. `SchemaInSyncTest` fails when `PlayerTables.kt` and the migrations disagree.
+5. `MigrationsOnDataTest` applies the migrations one by one and loads
+   `src/test/resources/db/seeds/<version>.sql` right after the migration that
+   created those tables, so every later migration runs against data, as in
+   production. A migration that creates a table gets a seed; a seed is written
+   once, in the schema of its migration, and never updated.

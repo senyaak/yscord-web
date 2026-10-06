@@ -22,3 +22,10 @@ spec:
       prune: true
       # Revert manual changes in the cluster back to what git says.
       selfHeal: true
+    # Explicit instead of the implicit default (5). A broken migration fails the
+    # same way every time, and the migration Job already retries transient errors
+    # (Postgres still starting) itself, so one more round is plenty.
+    retry:
+      limit: 1
+      backoff:
+        duration: 10s

@@ -34,7 +34,7 @@ object PlayerStateTable : Table("player_state") {
     val positionSec = double("position_sec").default(0.0)
     val playing = bool("playing").default(false)
     // Mute switch, persisted like volume. Not wired to the UI yet.
-    val muted = bool("muted")
+    val muted = bool("muted").default(false)
     val updatedAt = timestamp("updated_at")
 
     override val primaryKey = PrimaryKey(id)

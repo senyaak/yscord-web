@@ -1,6 +1,7 @@
 package de.yscord.player.db
 
 import org.jetbrains.exposed.v1.core.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.v1.jdbc.Database
 import org.jetbrains.exposed.v1.jdbc.JdbcTransaction
 import org.jetbrains.exposed.v1.jdbc.SchemaUtils
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
@@ -45,15 +46,16 @@ class SqlMigration(val version: String, val up: String, val down: String?) {
 }
 
 /**
- * Applies or reverts [migrations] on Exposed's default database. Plain class, no
- * Spring: [MigrationRunner] uses it at startup, the migration generator in tests.
+ * Applies or reverts [migrations] on [db] (Exposed's default database when null).
+ * Plain class, no Spring: [MigrationRunner] uses it at startup, the migration
+ * generator and tests directly.
  *
  * Each run is one transaction holding a Postgres advisory lock, so two processes
  * starting at once (two replicas, a Job and a pod) can't both apply the same
  * migration: the second waits, then finds nothing pending. Postgres DDL is
  * transactional, so a failing migration leaves the schema untouched.
  */
-class Migrator(private val migrations: List<SqlMigration>) {
+class Migrator(private val migrations: List<SqlMigration>, private val db: Database? = null) {
     private val log = LoggerFactory.getLogger(javaClass)
 
     /** Applies pending migrations; returns how many ran. */
@@ -78,7 +80,7 @@ class Migrator(private val migrations: List<SqlMigration>) {
     }
 
     /** Versions not applied yet. Read-only: no lock, creates nothing. */
-    fun pending(): List<String> = transaction {
+    fun pending(): List<String> = transaction(db) {
         val applied = if (SchemaMigrations.exists()) {
             SchemaMigrations.selectAll().map { it[SchemaMigrations.version] }.toSet()
         } else {
@@ -100,7 +102,11 @@ class Migrator(private val migrations: List<SqlMigration>) {
         }
     }
 
-    private fun <T> locked(block: JdbcTransaction.() -> T): T = transaction {
+    private fun <T> locked(block: JdbcTransaction.() -> T): T = transaction(db) {
+        // Exposed retries a failed transaction 3 times by default. A broken
+        // migration fails the same way every time, and the Job and Argo CD retry
+        // on their own: retries in every layer multiply.
+        maxAttempts = 1
         // Released automatically when the transaction ends.
         exec("SELECT pg_advisory_xact_lock($LOCK_KEY)")
         SchemaUtils.create(SchemaMigrations)
