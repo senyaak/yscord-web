@@ -10,4 +10,4 @@ resources:
 images:
   - name: yscord
     newName: ghcr.io/senyaak/yscord-web
-    newTag: sha-dcccc07
+    newTag: sha-2bd316f
