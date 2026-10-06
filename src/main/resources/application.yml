@@ -9,8 +9,11 @@ spring:
     username: ${SPRING_DATASOURCE_USERNAME}
     password: ${SPRING_DATASOURCE_PASSWORD}
 
-# Schema is owned by the Exposed MigrationRunner (see de.yscord.player.db), applied
-# on startup. Run with `--db.rollback=N` to revert the last N migrations.
+# Schema is owned by MigrationRunner (see de.yscord.player.db). on-startup | only | off;
+# in Kubernetes a Job migrates (`migrate` profile) and the app runs with `off`.
+# Run with `--db.rollback=N` to revert the last N migrations (local only).
+db:
+  migrate: ${DB_MIGRATE:on-startup}
 
 player:
   # Path to the yt-dlp binary (defaults to whatever is on PATH).

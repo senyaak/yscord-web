@@ -1,0 +1,9 @@
+# Profile for the Kubernetes migration Job: apply pending migrations, then exit.
+spring:
+  main:
+    web-application-type: none
+    # Only the migration runner and what it needs get created.
+    lazy-initialization: true
+
+db:
+  migrate: only

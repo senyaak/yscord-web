@@ -20,6 +20,11 @@ metadata:
   name: yscord
   labels:
     app: yscord
+  annotations:
+    # Argo CD applies waves in order and waits for each to be healthy: the
+    # migration Job (wave 1, migrate-job.yaml) must succeed before the new
+    # version rolls out. A failed migration leaves the old pods serving.
+    argocd.argoproj.io/sync-wave: "2"
 spec:
   # One replica for now: the session state is in-memory per pod (see stage 8).
   replicas: 1
@@ -73,6 +78,10 @@ spec:
                 secretKeyRef:
                   name: postgres-credentials
                   key: POSTGRES_PASSWORD
+            # The migration Job owns the schema; the app only checks that
+            # nothing is pending and refuses to start otherwise.
+            - name: DB_MIGRATE
+              value: "off"
             - name: PLAYER_CACHE_DIR
               value: /cache
             # The fresh copy prepared by the update-yt-dlp init container.

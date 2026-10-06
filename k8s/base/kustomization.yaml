@@ -10,5 +10,6 @@ resources:
   - namespace.yaml
   - postgres.yaml
   - app.yaml
+  - migrate-job.yaml
   - route.yaml
   - network-policies.yaml

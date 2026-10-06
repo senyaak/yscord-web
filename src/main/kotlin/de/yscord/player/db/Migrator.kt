@@ -4,6 +4,7 @@ import org.jetbrains.exposed.v1.core.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.v1.jdbc.JdbcTransaction
 import org.jetbrains.exposed.v1.jdbc.SchemaUtils
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
+import org.jetbrains.exposed.v1.jdbc.exists
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
@@ -74,6 +75,16 @@ class Migrator(private val migrations: List<SqlMigration>) {
         }
         if (pending.isEmpty()) log.info("DB schema up to date ({} applied)", applied.size)
         pending.size
+    }
+
+    /** Versions not applied yet. Read-only: no lock, creates nothing. */
+    fun pending(): List<String> = transaction {
+        val applied = if (SchemaMigrations.exists()) {
+            SchemaMigrations.selectAll().map { it[SchemaMigrations.version] }.toSet()
+        } else {
+            emptySet()
+        }
+        migrations.map { it.version }.filterNot { it in applied }
     }
 
     /** Reverts the last [steps] applied migrations. Local development only. */

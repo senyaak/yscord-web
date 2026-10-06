@@ -6,8 +6,10 @@
 # allows. Traffic between a pod and its own node (kubelet probes) is always allowed.
 #
 #   Envoy ──8080──► yscord ──5432──► postgres
-#                     ├──53──► cluster DNS
-#                     └──80/443──► internet, but not private ranges (LAN, cluster)
+#                     ├──53──► cluster DNS     ▲
+#                     └──80/443──► internet,   │
+#                          not private ranges  │
+#                     yscord-migrate ──5432────┘
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -90,6 +92,27 @@ spec:
         - protocol: TCP
           port: 80
 ---
+# The migration Job's pod only talks to Postgres.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: yscord-migrate
+spec:
+  podSelector:
+    matchLabels:
+      app: yscord-migrate
+  policyTypes:
+    - Ingress
+    - Egress
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app: postgres
+      ports:
+        - protocol: TCP
+          port: 5432
+---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -105,6 +128,9 @@ spec:
         - podSelector:
             matchLabels:
               app: yscord
+        - podSelector:
+            matchLabels:
+              app: yscord-migrate
       ports:
         - protocol: TCP
           port: 5432
