@@ -1,6 +1,9 @@
-# Release: the image CI built and tested, pulled from GHCR.
-# The tag is pinned to a commit (never "latest"), so every apply is reproducible
-# and a rollback is just pointing back at the previous sha.
+# Release: the image CI built and tested, pulled from GHCR. Argo CD deploys
+# whatever this file says on main.
+#
+# Don't edit newTag by hand: pushing a vX.Y.Z tag makes CI set it to that
+# version (see the release job in .github/workflows/ci.yml). A rollback is a
+# git revert of that commit.
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
