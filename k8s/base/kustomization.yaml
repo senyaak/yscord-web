@@ -11,3 +11,4 @@ resources:
   - postgres.yaml
   - app.yaml
   - route.yaml
+  - network-policies.yaml
