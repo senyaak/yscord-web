@@ -5,8 +5,9 @@ import org.jetbrains.exposed.v1.javatime.timestamp
 
 /**
  * Schema for the player, defined in Kotlin (Exposed) rather than annotations —
- * the Knex-style "tables as code" approach. The migration runner turns these into
- * DDL; queries are built with the Exposed DSL in [PlayerStateStore].
+ * the Knex-style "tables as code" approach. These are the CURRENT shape, used by
+ * queries in [PlayerStateStore]; the schema itself is created by migrations,
+ * each with its own frozen snapshot of the tables.
  */
 
 /** One track in the persisted queue; `position` keeps the order. */
@@ -41,6 +42,8 @@ object PlayerStateTable : Table("player_state") {
 object SchemaMigrations : Table("schema_migrations") {
     val version = varchar("version", 128)
     val appliedAt = timestamp("applied_at")
+    /** SHA-256 of the migration's SQL; null for rows written before checksums existed. */
+    val checksum = varchar("checksum", 64).nullable()
 
     override val primaryKey = PrimaryKey(version)
 }
