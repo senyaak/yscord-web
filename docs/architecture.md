@@ -22,7 +22,8 @@ flowchart LR
 
         subgraph ns_yscord["ns yscord (NetworkPolicy: default-deny)"]
             route["HTTPRoute yscord"]
-            app["Deployment yscord<br/>init: update-yt-dlp"]
+            app["Deployment yscord<br/>init: update-yt-dlp<br/>DB_MIGRATE=off"]
+            mig["Job yscord-migrate<br/>(per sync, then exits)"]
             pg[("StatefulSet postgres<br/>PVC 1Gi")]
         end
 
@@ -35,6 +36,7 @@ flowchart LR
     cfd -- ":80" --> envoy
     envoy -- ":8080" --> app
     app -- ":5432" --> pg
+    mig -- ":5432" --> pg
     app -- ":53" --> dns
     app -- ":443/:80, no private ranges" --> yt([YouTube, GitHub])
 
@@ -56,25 +58,28 @@ flowchart LR
 
     subgraph cluster["minikube yscord-dev"]
         argo["Argo CD<br/>Application yscord<br/>auto-sync, self-heal, prune"]
-        ys["ns yscord"]
+        subgraph waves["ns yscord, applied in sync waves"]
+            w0["wave 0: Postgres, Services,<br/>NetworkPolicies, HTTPRoute"]
+            w1["wave 1: Job yscord-migrate<br/>(Sync hook)"]
+            w2["wave 2: Deployment yscord"]
+            w0 --> w1 -- "only if the Job succeeded" --> w2
+        end
         kubelet["kubelet"]
     end
 
     argo -- "polls ~3 min" --> repo
-    argo -- "apply" --> ys
+    argo -- "apply" --> w0
     kubelet -- "pull image" --> ghcr
 
     hand["By hand (kubectl):<br/>Argo CD install, Application,<br/>Envoy Gateway, k8s/platform,<br/>Secrets"] -.-> cluster
 
     deployrepo[("separate deploy repo")]:::planned
     appofapps["app-of-apps + sync-waves"]:::planned
-    migjob["migrations Job<br/>(PreSync hook)"]:::planned
     vault[("Vault on the host")]:::planned
     eso["External Secrets Operator"]:::planned
 
     release -.-> deployrepo
     argo -.-> appofapps
-    argo -.-> migjob
     eso -.-> vault
 
     classDef planned stroke-dasharray: 5 5,opacity:0.6
