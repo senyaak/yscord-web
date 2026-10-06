@@ -69,7 +69,7 @@ the README there):
 - On startup, pending migrations are applied in one transaction under a Postgres
   advisory lock and recorded with a checksum in `schema_migrations`.
 - Schema changes are generated from `PlayerTables` and reviewed:
-  `./gradlew generateMigration -Pname=what_changed`. `SchemaInSyncTest` fails when
+  `./gradlew generateMigration --name what_changed`. `SchemaInSyncTest` fails when
   the tables and the migrations disagree.
 - `java -jar app.jar --db.rollback=N` reverts the last N migrations (`.down.sql`),
   for local development only.

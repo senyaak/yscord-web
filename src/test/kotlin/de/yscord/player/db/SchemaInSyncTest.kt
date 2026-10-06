@@ -21,7 +21,7 @@ class SchemaInSyncTest {
         val diff = transaction { MigrationUtils.statementsRequiredForDatabaseMigration(*appTables) }
         assertEquals(
             emptyList<String>(), diff,
-            "PlayerTables and migrations disagree; run ./gradlew generateMigration -Pname=...",
+            "PlayerTables and migrations disagree; run ./gradlew generateMigration --name ...",
         )
     }
 }

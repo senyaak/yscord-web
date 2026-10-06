@@ -1,6 +1,7 @@
 import com.github.gradle.node.npm.task.NpmTask
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.springframework.boot.gradle.tasks.run.BootRun
+import org.gradle.api.tasks.options.Option
 
 plugins {
     kotlin("jvm") version "2.4.10"
@@ -67,14 +68,24 @@ tasks.withType<Test> {
 
 // Drafts the next SQL migration from the difference between PlayerTables and a
 // throwaway Postgres with every existing migration applied:
-//   ./gradlew generateMigration -Pname=add_something
+//   ./gradlew generateMigration --name add_something
 // Review the draft before committing (see resources/db/migrations/README.md).
-tasks.register<JavaExec>("generateMigration") {
+abstract class GenerateMigration : JavaExec() {
+    @get:Input
+    @get:Option(option = "name", description = "Migration name: lowercase, digits, _")
+    abstract val migrationName: Property<String>
+
+    override fun exec() {
+        args(migrationName.get())
+        super.exec()
+    }
+}
+
+tasks.register<GenerateMigration>("generateMigration") {
     group = "database"
     description = "Draft the next SQL migration from PlayerTables"
     classpath = sourceSets["test"].runtimeClasspath
     mainClass = "de.yscord.player.db.GenerateMigrationKt"
-    args(providers.gradleProperty("name").getOrElse(""))
 }
 
 // Local `./gradlew bootRun` uses the dev profile (local DB credentials in

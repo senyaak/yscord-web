@@ -8,14 +8,14 @@ import java.io.File
 import kotlin.system.exitProcess
 
 /**
- * `./gradlew generateMigration -Pname=add_something`: starts a throwaway Postgres,
+ * `./gradlew generateMigration --name add_something`: starts a throwaway Postgres,
  * applies every existing migration, diffs the result against [appTables] and
  * writes the difference as the next `NNN_name.sql`. A draft — review it.
  */
 fun main(args: Array<String>) {
     val name = args.firstOrNull().orEmpty()
     if (!name.matches(Regex("[a-z0-9_]+"))) {
-        System.err.println("usage: ./gradlew generateMigration -Pname=add_something (lowercase, digits, _)")
+        System.err.println("usage: ./gradlew generateMigration --name add_something (lowercase, digits, _)")
         exitProcess(2)
     }
     val dir = File("src/main/resources/${SqlMigration.LOCATION}")
