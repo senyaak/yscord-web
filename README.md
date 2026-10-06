@@ -29,7 +29,7 @@ frontend/                              Angular workspace (SignalStore + panel UI
 - **Dev:** `ng serve` (port 4300) proxies `/api` to Spring (8080) via `proxy.conf.json`.
 - **Prod:** `ng build` writes to `resources/static`; Spring serves the SPA at `/`.
 - **`./gradlew build`** compiles the frontend (node-gradle downloads its own Node),
-  runs backend tests on H2, and assembles a single runnable jar with the SPA inside.
+  runs backend tests against Postgres in Docker (Testcontainers), and assembles a single runnable jar with the SPA inside.
 
 ## Run locally
 ```bash
@@ -88,5 +88,4 @@ published image when present and falls back to a local build (`pull_policy: miss
 ## Next steps
 - Progressive streaming (or a `/api/prepare` step) so long tracks start before the
   full download finishes — currently the first play blocks until yt-dlp is done.
-- Testcontainers so tests exercise real Postgres + the migrations, not just H2.
 - Per-user state (auth) instead of a single global player.

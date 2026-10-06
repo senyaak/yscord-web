@@ -4,12 +4,15 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.context.annotation.Import
 
 /**
  * Boots the full context — which runs the Exposed [de.yscord.player.db.MigrationRunner]
- * against H2, creating the schema — then round-trips a snapshot through the store.
+ * against a Postgres container, creating the schema — then round-trips a snapshot
+ * through the store.
  */
 @SpringBootTest
+@Import(TestcontainersConfig::class)
 class PlayerStateStoreTest(@Autowired val store: PlayerStateStore) {
 
     private fun track(id: String, title: String) =
