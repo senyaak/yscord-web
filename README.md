@@ -62,11 +62,17 @@ Tables are defined in Kotlin (`de.yscord.player.db.PlayerTables`), not annotatio
 the Knex-style "schema as code" approach. The player snapshot (queue + index + loop
 + volume) is persisted on every change (debounced) and rehydrated on load.
 
-Schema is managed by a small migration runner (`MigrationRunner`), a Knex analogue:
+Schema is managed by a small migration runner (`MigrationRunner` + `Migrator`), a
+Knex analogue with plain SQL files in `src/main/resources/db/migrations` (rules in
+the README there):
 
-- Migrations are `Migration` beans with `up()` / `down()`, ordered by `version`.
-- On startup, pending migrations are applied and recorded in `schema_migrations`.
-- `java -jar app.jar --db.rollback=N` reverts the last N migrations (`down()`).
+- On startup, pending migrations are applied in one transaction under a Postgres
+  advisory lock and recorded with a checksum in `schema_migrations`.
+- Schema changes are generated from `PlayerTables` and reviewed:
+  `./gradlew generateMigration -Pname=what_changed`. `SchemaInSyncTest` fails when
+  the tables and the migrations disagree.
+- `java -jar app.jar --db.rollback=N` reverts the last N migrations (`.down.sql`),
+  for local development only.
 
 ```bash
 # roll back the last migration

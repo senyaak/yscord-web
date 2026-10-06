@@ -48,6 +48,9 @@ dependencies {
     // migrations use Postgres-only features (advisory locks).
     testImplementation("org.springframework.boot:spring-boot-testcontainers")
     testImplementation("org.testcontainers:testcontainers-postgresql")
+    // Diffs PlayerTables against a migrated database: SchemaInSyncTest and the
+    // generateMigration task.
+    testImplementation("org.jetbrains.exposed:exposed-migration:$exposedVersion")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
@@ -60,6 +63,18 @@ kotlin {
 
 tasks.withType<Test> {
     useJUnitPlatform()
+}
+
+// Drafts the next SQL migration from the difference between PlayerTables and a
+// throwaway Postgres with every existing migration applied:
+//   ./gradlew generateMigration -Pname=add_something
+// Review the draft before committing (see resources/db/migrations/README.md).
+tasks.register<JavaExec>("generateMigration") {
+    group = "database"
+    description = "Draft the next SQL migration from PlayerTables"
+    classpath = sourceSets["test"].runtimeClasspath
+    mainClass = "de.yscord.player.db.GenerateMigrationKt"
+    args(providers.gradleProperty("name").getOrElse(""))
 }
 
 // Local `./gradlew bootRun` uses the dev profile (local DB credentials in

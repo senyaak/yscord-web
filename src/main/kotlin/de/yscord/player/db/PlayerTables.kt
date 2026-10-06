@@ -30,13 +30,16 @@ object PlayerStateTable : Table("player_state") {
     val currentIndex = integer("current_index")
     val loopMode = varchar("loop_mode", 16)
     val volume = double("volume")
-    // Added in V002 so a crash/restart resumes from the same spot.
-    val positionSec = double("position_sec")
-    val playing = bool("playing")
+    // Added in 002 so a crash/restart resumes from the same spot.
+    val positionSec = double("position_sec").default(0.0)
+    val playing = bool("playing").default(false)
     val updatedAt = timestamp("updated_at")
 
     override val primaryKey = PrimaryKey(id)
 }
+
+/** Every table the app owns — what the migration generator and SchemaInSyncTest compare. */
+val appTables = arrayOf(QueueItems, PlayerStateTable)
 
 /** Migration history — the runner's equivalent of Knex's `knex_migrations`. */
 object SchemaMigrations : Table("schema_migrations") {
