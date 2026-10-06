@@ -72,6 +72,7 @@ class PlayerStateStore {
             it[volume] = snapshot.volume
             it[positionSec] = snapshot.positionSec
             it[playing] = snapshot.playing
+            it[muted] = false
             it[updatedAt] = Instant.now()
         }
     }
