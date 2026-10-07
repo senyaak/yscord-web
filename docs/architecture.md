@@ -57,7 +57,7 @@ flowchart LR
     release -- "one commit, deploy key" --> repo[("yscord-deploy, main<br/>apps/, yscord/")]
 
     subgraph cluster["minikube yscord-dev"]
-        argo["Argo CD<br/>Application yscord<br/>auto-sync, self-heal, prune"]
+        argo["Argo CD, app of apps:<br/>root → argocd (-2), envoy-gateway (-1),<br/>platform (0), yscord (1)"]
         subgraph waves["ns yscord, applied in sync waves"]
             w0["wave 0: Postgres, Services,<br/>NetworkPolicies, HTTPRoute"]
             w1["wave 1: Job yscord-migrate<br/>(Sync hook)"]
@@ -71,14 +71,12 @@ flowchart LR
     argo -- "apply" --> w0
     kubelet -- "pull image" --> ghcr
 
-    hand["By hand (kubectl):<br/>Argo CD install, Application,<br/>Envoy Gateway, k8s/platform,<br/>Secrets"] -.-> cluster
+    hand["By hand (kubectl):<br/>Argo CD install, root Application,<br/>Secrets"] -.-> cluster
 
-    appofapps["app-of-apps + sync-waves"]:::planned
     vault[("Vault on the host")]:::planned
     eso["External Secrets Operator"]:::planned
     staging["staging env: main → staging,<br/>tag promotes to prod"]:::planned
 
-    argo -.-> appofapps
     eso -.-> vault
     build -.-> staging
 
