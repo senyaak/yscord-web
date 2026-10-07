@@ -1,9 +1,8 @@
-# Release: the image CI built and tested, pulled from GHCR. Argo CD deploys
-# whatever this file says on main.
+# Release: the image CI built and tested, pulled from GHCR.
 #
-# Don't edit newTag by hand: pushing a vX.Y.Z tag makes CI set it to that
-# version (see the release job in .github/workflows/ci.yml). A rollback is a
-# git revert of that commit.
+# Not deployed from here. Pushing a vX.Y.Z tag makes CI copy base/ and this
+# overlay to the deploy repo (senyaak/yscord-deploy, watched by Argo CD) and pin
+# the image to that version there (release job in .github/workflows/ci.yml).
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
@@ -13,4 +12,4 @@ resources:
 images:
 - name: yscord
   newName: ghcr.io/senyaak/yscord-web
-  newTag: 0.3.1
+  newTag: set-by-release-job

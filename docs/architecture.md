@@ -52,9 +52,9 @@ flowchart LR
     push(["git push main"]) --> build["CI: build + test<br/>image sha-xxxxxxx"]
     build --> ghcr[("GHCR<br/>ghcr.io/senyaak/yscord-web")]
 
-    tag(["git push tag vX.Y.Z"]) --> release["CI release job<br/>tag image X.Y.Z<br/>kustomize edit set image"]
+    tag(["git push tag vX.Y.Z"]) --> release["CI release job<br/>tag image X.Y.Z<br/>copy k8s/ of the tagged commit<br/>kustomize edit set image"]
     release -- "add tag, no rebuild" --> ghcr
-    release -- "commit: Release vX.Y.Z [skip ci]" --> repo[("GitHub repo, main<br/>k8s/overlays/release")]
+    release -- "one commit, deploy key" --> repo[("yscord-deploy, main<br/>apps/, yscord/")]
 
     subgraph cluster["minikube yscord-dev"]
         argo["Argo CD<br/>Application yscord<br/>auto-sync, self-heal, prune"]
@@ -73,12 +73,10 @@ flowchart LR
 
     hand["By hand (kubectl):<br/>Argo CD install, Application,<br/>Envoy Gateway, k8s/platform,<br/>Secrets"] -.-> cluster
 
-    deployrepo[("separate deploy repo")]:::planned
     appofapps["app-of-apps + sync-waves"]:::planned
     vault[("Vault on the host")]:::planned
     eso["External Secrets Operator"]:::planned
 
-    release -.-> deployrepo
     argo -.-> appofapps
     eso -.-> vault
 
