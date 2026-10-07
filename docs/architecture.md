@@ -49,11 +49,11 @@ flowchart LR
 
 ```mermaid
 flowchart LR
-    push(["git push main"]) --> build["CI: build + test<br/>image sha-xxxxxxx"]
-    build --> ghcr[("GHCR<br/>ghcr.io/senyaak/yscord-web")]
+    push(["git push main / PR"]) --> build["CI: test + build image<br/>(not pushed)"]
 
-    tag(["git push tag vX.Y.Z"]) --> release["CI release job<br/>tag image X.Y.Z<br/>copy k8s/ of the tagged commit<br/>kustomize edit set image"]
-    release -- "add tag, no rebuild" --> ghcr
+    tag(["git push tag vX.Y.Z"]) --> tagbuild["CI: test + build image"]
+    tagbuild -- "push X.Y.Z, latest" --> ghcr[("GHCR<br/>ghcr.io/senyaak/yscord-web")]
+    tagbuild --> release["CI release job<br/>copy k8s/ of the tagged commit<br/>kustomize edit set image"]
     release -- "one commit, deploy key" --> repo[("yscord-deploy, main<br/>apps/, yscord/")]
 
     subgraph cluster["minikube yscord-dev"]
@@ -76,9 +76,11 @@ flowchart LR
     appofapps["app-of-apps + sync-waves"]:::planned
     vault[("Vault on the host")]:::planned
     eso["External Secrets Operator"]:::planned
+    staging["staging env: main → staging,<br/>tag promotes to prod"]:::planned
 
     argo -.-> appofapps
     eso -.-> vault
+    build -.-> staging
 
     classDef planned stroke-dasharray: 5 5,opacity:0.6
 ```
