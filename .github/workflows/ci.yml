@@ -113,12 +113,18 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       # No rebuild: copy the tag onto the exact image that was tested on main.
+      # A tag pushed together with its commit gets here before main's image
+      # build finishes, so wait for the image instead of failing.
       - name: Tag the image with the version
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
           SOURCE="$IMAGE:sha-${GITHUB_SHA::7}"
-          docker buildx imagetools inspect "$SOURCE" > /dev/null \
-            || { echo "::error::$SOURCE not found; wait for the main build to finish, then re-run"; exit 1; }
+          for attempt in $(seq 1 60); do
+            docker buildx imagetools inspect "$SOURCE" > /dev/null 2>&1 && break
+            [ "$attempt" = 60 ] && { echo "::error::$SOURCE still missing after 15 min; did the main build fail?"; exit 1; }
+            echo "waiting for $SOURCE ($attempt/60)"
+            sleep 15
+          done
           docker buildx imagetools create --tag "$IMAGE:$VERSION" "$SOURCE"
           echo "VERSION=$VERSION" >> "$GITHUB_ENV"
 
