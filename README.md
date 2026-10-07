@@ -15,7 +15,7 @@ Discord bot's message panel, and rehydrates its queue from the backend on load.
 
 ## Architecture
 
-Cluster and delivery diagrams: [docs/architecture.md](docs/architecture.md).
+Cluster and delivery diagrams: [docs/architecture.md](docs/architecture.md). Learning roadmap: [docs/roadmap.md](docs/roadmap.md).
 
 One Spring Boot jar serves both the API and the SPA — single origin, no CORS.
 
