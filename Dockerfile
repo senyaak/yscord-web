@@ -40,4 +40,7 @@ RUN groupadd --system spring && useradd --system --gid spring --uid 1001 spring
 COPY --from=build /workspace/build/libs/*.jar app.jar
 USER spring
 EXPOSE 8080
-ENTRYPOINT ["java", "-XX:MaxRAMPercentage=75", "-jar", "/app/app.jar"]
+# JVM flags live in JAVA_TOOL_OPTIONS, not on the command line, so a deployment
+# can replace them (command-line flags would override the variable).
+ENV JAVA_TOOL_OPTIONS="-XX:MaxRAMPercentage=75"
+ENTRYPOINT ["java", "-jar", "/app/app.jar"]
