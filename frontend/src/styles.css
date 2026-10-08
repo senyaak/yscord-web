@@ -11,6 +11,7 @@ body {
   font-family: 'gg sans', 'Segoe UI', system-ui, sans-serif;
 }
 .app-header {
+  position: relative;
   text-align: center;
   padding: 28px 16px 8px;
 }
