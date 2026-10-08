@@ -1,5 +1,7 @@
 package de.yscord.player.db
 
+import de.yscord.auth.AppUsers
+import de.yscord.auth.Visitors
 import org.jetbrains.exposed.v1.core.Table
 import org.jetbrains.exposed.v1.javatime.timestamp
 
@@ -41,7 +43,7 @@ object PlayerStateTable : Table("player_state") {
 }
 
 /** Every table the app owns — what the migration generator and SchemaInSyncTest compare. */
-val appTables = arrayOf(QueueItems, PlayerStateTable)
+val appTables = arrayOf(QueueItems, PlayerStateTable, AppUsers, Visitors)
 
 /** Migration history — the runner's equivalent of Knex's `knex_migrations`. */
 object SchemaMigrations : Table("schema_migrations") {

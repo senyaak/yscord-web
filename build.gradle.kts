@@ -34,6 +34,11 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-jdbc")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("org.springframework.boot:spring-boot-starter-validation")
+    // Login with Google, done by the server (BFF): the browser only ever holds a
+    // session cookie, never OAuth tokens.
+    implementation("org.springframework.boot:spring-boot-starter-oauth2-client")
+    // HTTP sessions in Postgres: they survive restarts and work across replicas.
+    implementation("org.springframework.boot:spring-boot-starter-session-jdbc")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
 

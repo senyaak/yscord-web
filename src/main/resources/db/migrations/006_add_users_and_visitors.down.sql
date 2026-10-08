@@ -1,0 +1,2 @@
+DROP TABLE IF EXISTS visitor;
+DROP TABLE IF EXISTS app_user;
