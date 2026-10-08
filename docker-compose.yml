@@ -29,6 +29,10 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/yscord
       SPRING_DATASOURCE_USERNAME: yscord
       SPRING_DATASOURCE_PASSWORD: yscord
+      # Google login only works with a real OAuth client (export both before
+      # `docker compose up`); without one the app still starts, login fails.
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-not-configured}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-not-configured}
     ports:
       - "8080:8080"
     healthcheck:
