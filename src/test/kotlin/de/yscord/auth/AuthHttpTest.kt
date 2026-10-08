@@ -60,5 +60,7 @@ class AuthHttpTest(@Value("\${local.server.port}") private val port: Int) {
         assertEquals(302, response.statusCode())
         val location = response.headers().firstValue("Location").orElseThrow()
         assertTrue(location.startsWith("https://accounts.google.com/"), location)
+        // From app.public-url (test config), not from how the request reached us.
+        assertTrue("redirect_uri=http://localhost/login/oauth2/code/google" in location, location)
     }
 }

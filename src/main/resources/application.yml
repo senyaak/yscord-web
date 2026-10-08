@@ -18,6 +18,10 @@ spring:
             client-id: ${GOOGLE_CLIENT_ID}
             client-secret: ${GOOGLE_CLIENT_SECRET}
             scope: openid,profile,email
+            # Must equal, character for character, a redirect URI registered for
+            # the client in Google's console. Spring would derive it from the
+            # request, but behind Cloudflare → Envoy the app only sees http.
+            redirect-uri: ${app.public-url}/login/oauth2/code/{registrationId}
   session:
     jdbc:
       # Tables come from our migrations (005), not from Spring.
@@ -36,15 +40,18 @@ player:
   cache-dir: ${PLAYER_CACHE_DIR:${java.io.tmpdir}/yscord-audio}
 
 server:
-  # Behind Cloudflare → cloudflared → Envoy the app is reached over plain HTTP.
-  # Trust X-Forwarded-Proto/Host so it knows the browser used https (redirect URIs
-  # for Google, Secure cookies). Safe only because NetworkPolicy lets nothing but
-  # Envoy reach the app: nobody else can set these headers.
-  forward-headers-strategy: framework
   servlet:
     session:
       # Stay logged in for a month of inactivity (sessions live in Postgres).
       timeout: 30d
+      cookie:
+        secure: ${app.secure-cookies}
+
+# Where browsers reach this app. Behind proxies the app can't see it itself.
+app:
+  public-url: ${APP_PUBLIC_URL}
+  # Secure cookies whenever the public URL is https.
+  secure-cookies: ${APP_SECURE_COOKIES:true}
 
 management:
   endpoints:

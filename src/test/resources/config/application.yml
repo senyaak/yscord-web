@@ -8,3 +8,7 @@ spring:
           google:
             client-id: test-client
             client-secret: test-secret
+
+app:
+  public-url: http://localhost
+  secure-cookies: false

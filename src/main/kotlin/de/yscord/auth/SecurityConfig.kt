@@ -39,6 +39,7 @@ class SecurityConfig {
 class LinkVisitorOnLogin(
     private val users: UserService,
     private val visitors: VisitorService,
+    @org.springframework.beans.factory.annotation.Value("\${app.secure-cookies}") private val secure: Boolean,
 ) : SimpleUrlAuthenticationSuccessHandler("/") {
 
     override fun onAuthenticationSuccess(
@@ -49,7 +50,7 @@ class LinkVisitorOnLogin(
         val userId = users.upsert(authentication.principal as OidcUser)
         val current = VisitorCookieFilter.visitorId(request)
         val kept = visitors.linkToUser(current, userId)
-        if (kept != current) VisitorCookieFilter.setCookie(request, response, kept)
+        if (kept != current) response.addHeader("Set-Cookie", VisitorCookieFilter.cookie(kept, secure))
         super.onAuthenticationSuccess(request, response, authentication)
     }
 }

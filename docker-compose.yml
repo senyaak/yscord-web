@@ -33,6 +33,8 @@ services:
       # `docker compose up`); without one the app still starts, login fails.
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-not-configured}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-not-configured}
+      APP_PUBLIC_URL: http://localhost:8080
+      APP_SECURE_COOKIES: "false"
     ports:
       - "8080:8080"
     healthcheck:
