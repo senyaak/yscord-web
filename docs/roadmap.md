@@ -20,7 +20,7 @@ step around the yscord player. Each finished topic gets a cheat sheet in
 
 1. ✅ Deploy repo [yscord-deploy](https://github.com/senyaak/yscord-deploy): the release job publishes manifests + image version in one commit; main never touches the cluster.
 2. ✅ App of apps with sync waves; Argo CD manages itself; Envoy Gateway and the platform move to the deploy repo.
-3. Secrets from an external store via External Secrets Operator (lab: local OpenBao on the host). One manual secret left: the store credential ("secret zero").
+3. ✅ Secrets from an external store via External Secrets Operator (lab: local OpenBao on the host). One manual secret left: the store credential ("secret zero").
 4. Idempotent bootstrap script with preflight checks; prove it on a fresh cluster (blue/green migration #3), then delete the old one. Lesson 004.
 
 ## Next
