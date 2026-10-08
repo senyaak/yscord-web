@@ -22,8 +22,8 @@ step around the yscord player. Each finished topic gets a cheat sheet in
 
 | Stage | What |
 |---|---|
-| 4 | Prometheus + Grafana (kube-prometheus-stack, trimmed; the cluster now has 6 GB). Business metrics (listeners, commands, yt-dlp latency, cache hits); cloudflared metrics; alerts on "site down" and restarts. Side task: audio cache eviction (LRU by last play, size and count caps, never the current or next track). |
-| 5 | Kafka via Strimzi; the player publishes domain events. |
+| 4 | Prometheus + Grafana (kube-prometheus-stack, trimmed; the cluster now has 6 GB). The WebSocket session learns its visitor/user at the handshake (metrics split by logged-in vs anonymous; events need it in stage 5). Business metrics (listeners, commands, yt-dlp latency, cache hits); cloudflared metrics; alerts on "site down" and restarts. Side task: audio cache eviction (LRU by last play, size and count caps, never the current or next track). |
+| 5 | Kafka via Strimzi; the player publishes domain events, each carrying the visitor and user who caused it (user actions aren't recorded anywhere yet). |
 | 6 | stats-service: its own Gradle module, image and Deployment; consumes events, aggregates into Postgres, REST API. |
 | 7 | Stats tab in the UI, Grafana panels on Postgres, track autocomplete from the catalog built from events. |
 | 8 | Several player replicas without a leader: a replicated state machine over a single-partition event topic. |
