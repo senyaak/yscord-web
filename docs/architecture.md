@@ -9,7 +9,7 @@ Updated as each stage lands. Dashed boxes are planned, not built yet.
 flowchart LR
     browser([Browser]) --> cf["Cloudflare edge<br/>yscord-web.senyaak.work"]
 
-    subgraph cluster["minikube yscord-dev (CNI: Calico)"]
+    subgraph cluster["minikube yscord (CNI: Calico)"]
         subgraph ns_edge["ns edge"]
             cfd["cloudflared x2<br/>tunnel k8s"]
             gw["Gateway main"]
@@ -56,7 +56,7 @@ flowchart LR
     tagbuild --> release["CI release job<br/>copy k8s/ of the tagged commit<br/>kustomize edit set image"]
     release -- "one commit, deploy key" --> repo[("yscord-deploy, main<br/>apps/, yscord/")]
 
-    subgraph cluster["minikube yscord-dev"]
+    subgraph cluster["minikube yscord"]
         argo["Argo CD, app of apps:<br/>root → argocd (-2), envoy-gateway (-1),<br/>platform (0), yscord (1)"]
         subgraph waves["ns yscord, applied in sync waves"]
             w0["wave 0: Postgres, Services,<br/>NetworkPolicies, HTTPRoute"]
@@ -71,13 +71,14 @@ flowchart LR
     argo -- "apply" --> w0
     kubelet -- "pull image" --> ghcr
 
-    hand["By hand (kubectl):<br/>Argo CD install, root Application,<br/>Secrets"] -.-> cluster
+    hand["scripts/bootstrap.sh:<br/>Argo CD install, secret zero,<br/>root Application"] -.-> cluster
 
-    vault[("Vault on the host")]:::planned
-    eso["External Secrets Operator"]:::planned
+    bao[("OpenBao on the host<br/>(lab secret store)")]
+    eso["External Secrets Operator<br/>ClusterSecretStore secrets"]
     staging["staging env: main → staging,<br/>tag promotes to prod"]:::planned
 
-    eso -.-> vault
+    eso -- "AppRole, reads" --> bao
+    eso -- "creates Secrets" --> w0
     build -.-> staging
 
     classDef planned stroke-dasharray: 5 5,opacity:0.6

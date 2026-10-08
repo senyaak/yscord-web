@@ -15,13 +15,7 @@ step around the yscord player. Each finished topic gets a cheat sheet in
 | 3d | yt-dlp kept fresh: init container self-update + Renovate-pinned version | |
 | 3b | Argo CD, auto-sync/self-heal/prune; release by git tag | [003](../lessons/003.argocd-releases-migrations.md) |
 | 3e | Migrations: SQL files generated from the model, checksums, advisory lock, guard tests (schema in sync, seeded data); migration Job gating the rollout | [003](../lessons/003.argocd-releases-migrations.md) |
-
-## In progress: 3f — declarative bootstrap
-
-1. ✅ Deploy repo [yscord-deploy](https://github.com/senyaak/yscord-deploy): the release job publishes manifests + image version in one commit; main never touches the cluster.
-2. ✅ App of apps with sync waves; Argo CD manages itself; Envoy Gateway and the platform move to the deploy repo.
-3. ✅ Secrets from an external store via External Secrets Operator (lab: local OpenBao on the host). One manual secret left: the store credential ("secret zero").
-4. Idempotent bootstrap script with preflight checks; prove it on a fresh cluster (blue/green migration #3), then delete the old one. Lesson 004.
+| 3f | Declarative bootstrap: deploy repo, app of apps, Argo CD managing itself, secrets through External Secrets Operator, bootstrap script; migration #3 | [004](../lessons/004.declarative-bootstrap.md) |
 
 ## Next
 
