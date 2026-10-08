@@ -24,7 +24,7 @@ flowchart LR
             route["HTTPRoute yscord"]
             app["Deployment yscord<br/>init: update-yt-dlp<br/>DB_MIGRATE=off"]
             mig["Job yscord-migrate<br/>(per sync, then exits)"]
-            pg[("StatefulSet postgres<br/>PVC 1Gi")]
+            pg[("StatefulSet postgres<br/>PVC 1Gi<br/>player, users, visitors, sessions")]
         end
 
         subgraph ns_kube["ns kube-system"]
@@ -33,6 +33,7 @@ flowchart LR
     end
 
     cf -- "tunnel (dialled out by cloudflared)" --> cfd
+    app -- "OAuth code exchange (:443)" --> google([Google accounts])
     cfd -- ":80" --> envoy
     envoy -- ":8080" --> app
     app -- ":5432" --> pg
