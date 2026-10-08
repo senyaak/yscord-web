@@ -61,6 +61,8 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       # v1.2.3 → image tags 1.2.3 and latest (docker-compose.yml uses latest).
+      # A release candidate v1.2.3-rc.1 gets 1.2.3-rc.1 only: it's deployed for
+      # testing, but never becomes latest.
       - name: Extract image metadata
         id: meta
         uses: docker/metadata-action@v5
@@ -68,7 +70,7 @@ jobs:
           images: ghcr.io/${{ github.repository }}
           tags: |
             type=semver,pattern={{version}}
-            type=raw,value=latest,enable=${{ env.RELEASE }}
+            type=raw,value=latest,enable=${{ env.RELEASE == 'true' && !contains(github.ref_name, '-') }}
 
       - name: Build (and push on release tags)
         uses: docker/build-push-action@v6
