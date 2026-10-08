@@ -12,3 +12,8 @@ src/main/resources/static/
 
 # OS
 .DS_Store
+
+# Local credentials (Google OAuth client JSON, …). The cluster gets them from the
+# secret store; these files are only a local copy and never leave this machine.
+creds/
+client_secret_*.json
