@@ -39,4 +39,7 @@ step around the yscord player. Each finished topic gets a cheat sheet in
 2. Postgres replication.
 3. Cache eviction demo with a tiny `emptyDir` size limit (pod gets evicted).
 4. Local dev loop that coexists with Argo CD self-heal.
-5. REST handler: replace echoing `IllegalArgumentException` messages with an own exception type.
+5. Argo CD admin access: change the admin password and delete
+   `argocd-initial-admin-secret`, or log in through SSO (Dex with GitHub).
+6. Rotate the External Secrets AppRole `secret_id` instead of one that never expires.
+7. REST handler: replace echoing `IllegalArgumentException` messages with an own exception type.
