@@ -8,6 +8,20 @@ spring:
     url: ${SPRING_DATASOURCE_URL}
     username: ${SPRING_DATASOURCE_USERNAME}
     password: ${SPRING_DATASOURCE_PASSWORD}
+  # Optional Google login (see de.yscord.auth.SecurityConfig). Credentials come
+  # from the environment, in Kubernetes from the secret store.
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID}
+            client-secret: ${GOOGLE_CLIENT_SECRET}
+            scope: openid,profile,email
+  session:
+    jdbc:
+      # Tables come from our migrations (005), not from Spring.
+      initialize-schema: never
 
 # Schema is owned by MigrationRunner (see de.yscord.player.db). on-startup | only | off;
 # in Kubernetes a Job migrates (`migrate` profile) and the app runs with `off`.
@@ -20,6 +34,12 @@ player:
   yt-dlp-path: ${PLAYER_YTDLP_PATH:yt-dlp}
   # Where downloaded audio is cached (defaults to a temp subdir).
   cache-dir: ${PLAYER_CACHE_DIR:${java.io.tmpdir}/yscord-audio}
+
+server:
+  servlet:
+    session:
+      # Stay logged in for a month of inactivity (sessions live in Postgres).
+      timeout: 30d
 
 management:
   endpoints:
