@@ -36,6 +36,11 @@ player:
   cache-dir: ${PLAYER_CACHE_DIR:${java.io.tmpdir}/yscord-audio}
 
 server:
+  # Behind Cloudflare → cloudflared → Envoy the app is reached over plain HTTP.
+  # Trust X-Forwarded-Proto/Host so it knows the browser used https (redirect URIs
+  # for Google, Secure cookies). Safe only because NetworkPolicy lets nothing but
+  # Envoy reach the app: nobody else can set these headers.
+  forward-headers-strategy: framework
   servlet:
     session:
       # Stay logged in for a month of inactivity (sessions live in Postgres).
