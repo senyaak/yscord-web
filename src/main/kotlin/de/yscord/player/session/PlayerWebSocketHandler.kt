@@ -5,11 +5,15 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import de.yscord.player.YtDlpException
 import org.slf4j.LoggerFactory
 import org.springframework.context.event.EventListener
+import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
 import org.springframework.web.socket.CloseStatus
+import org.springframework.web.socket.PingMessage
 import org.springframework.web.socket.TextMessage
+import org.springframework.web.socket.WebSocketMessage
 import org.springframework.web.socket.WebSocketSession
 import org.springframework.web.socket.handler.TextWebSocketHandler
+import java.nio.ByteBuffer
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -61,9 +65,23 @@ class PlayerWebSocketHandler(private val service: PlayerSessionService) : TextWe
         sessions.forEach { trySend(it, json) }
     }
 
-    private fun trySend(session: WebSocketSession, json: String) {
+    /**
+     * Keepalive. State is only sent on change, so a paused player's connection
+     * goes silent, and proxies on the way close idle WebSockets (Cloudflare
+     * after 100s): clients reconnected every ~2 minutes. A ping frame every 30s
+     * is traffic for every hop; browsers answer with a pong by themselves. A
+     * ping that fails also drops a dead client from the list.
+     */
+    @Scheduled(fixedRate = 30_000)
+    fun keepAlive() {
+        sessions.forEach { trySend(it, PingMessage(ByteBuffer.allocate(0))) }
+    }
+
+    private fun trySend(session: WebSocketSession, json: String) = trySend(session, TextMessage(json))
+
+    private fun trySend(session: WebSocketSession, message: WebSocketMessage<*>) {
         try {
-            if (session.isOpen) synchronized(session) { session.sendMessage(TextMessage(json)) }
+            if (session.isOpen) synchronized(session) { session.sendMessage(message) }
         } catch (e: Exception) {
             log.debug("drop session on send failure: {}", e.message)
             sessions.remove(session)
