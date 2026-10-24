@@ -27,6 +27,11 @@ class VisitorCookieFilter(
     @Value("\${app.secure-cookies}") private val secure: Boolean,
 ) : OncePerRequestFilter() {
 
+    // Probes and Prometheus never send cookies: without this every one of their
+    // requests would create a visitor (it did: ~200k rows from kubelet probes).
+    override fun shouldNotFilter(request: HttpServletRequest): Boolean =
+        request.requestURI.startsWith("/actuator")
+
     override fun doFilterInternal(request: HttpServletRequest, response: HttpServletResponse, chain: FilterChain) {
         val fromCookie = request.cookies?.firstOrNull { it.name == COOKIE }?.value
             ?.let { runCatching { UUID.fromString(it) }.getOrNull() }

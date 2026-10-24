@@ -48,6 +48,8 @@ dependencies {
     implementation("org.jetbrains.exposed:exposed-java-time:$exposedVersion")
 
     runtimeOnly("org.postgresql:postgresql")
+    // /actuator/prometheus: JVM, HTTP, connection pool metrics in Prometheus format.
+    runtimeOnly("io.micrometer:micrometer-registry-prometheus")
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     // Tests run against a real Postgres in Docker, the same engine as prod —

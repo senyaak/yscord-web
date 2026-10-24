@@ -9,6 +9,11 @@ spring:
             client-id: test-client
             client-secret: test-secret
 
+# Random management port, like the RANDOM_PORT web server.
+management:
+  server:
+    port: 0
+
 app:
   public-url: http://localhost
   secure-cookies: false

@@ -17,10 +17,16 @@ import java.net.http.HttpResponse
 /** The login plumbing as a browser sees it, against a real server. */
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 @Import(TestcontainersConfig::class)
-class AuthHttpTest(@Value("\${local.server.port}") private val port: Int) {
+class AuthHttpTest(
+    @Value("\${local.server.port}") private val port: Int,
+    @Value("\${local.management.port}") private val managementPort: Int,
+) {
     private val http = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NEVER).build()
 
     private fun send(method: String, path: String, cookies: Map<String, String> = emptyMap(), vararg headers: String) =
+        sendTo(port, method, path, cookies, *headers)
+
+    private fun sendTo(port: Int, method: String, path: String, cookies: Map<String, String> = emptyMap(), vararg headers: String) =
         http.send(
             HttpRequest.newBuilder(URI("http://localhost:$port$path"))
                 .method(method, HttpRequest.BodyPublishers.noBody())
@@ -62,5 +68,21 @@ class AuthHttpTest(@Value("\${local.server.port}") private val port: Int) {
         assertTrue(location.startsWith("https://accounts.google.com/"), location)
         // From app.public-url (test config), not from how the request reached us.
         assertTrue("redirect_uri=http://localhost/login/oauth2/code/google" in location, location)
+    }
+
+    @Test
+    fun `probes and metrics live on the management port and create no visitor`() {
+        val health = sendTo(managementPort, "GET", "/actuator/health/readiness")
+        assertEquals(200, health.statusCode())
+        assertTrue("visitor_id" !in health.setCookies(), health.headers().toString())
+        val metrics = sendTo(managementPort, "GET", "/actuator/prometheus")
+        assertEquals(200, metrics.statusCode())
+        assertTrue("jvm_memory_used_bytes" in metrics.body())
+        // Never on the public port: the route to the internet only leads there.
+        // Even there /actuator creates no visitor (in case the ports are ever
+        // merged again: the management server doesn't run our filters).
+        val public = send("GET", "/actuator/prometheus")
+        assertEquals(404, public.statusCode())
+        assertTrue("visitor_id" !in public.setCookies(), public.headers().toString())
     }
 }

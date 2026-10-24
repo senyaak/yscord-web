@@ -54,10 +54,14 @@ app:
   secure-cookies: ${APP_SECURE_COOKIES:true}
 
 management:
+  # Actuator on its own port: probes and Prometheus use it, the public route
+  # only leads to server.port, so internal numbers never reach the internet.
+  server:
+    port: ${MANAGEMENT_PORT:8081}
   endpoints:
     web:
       exposure:
-        include: health,info
+        include: health,info,prometheus
   endpoint:
     health:
       probes:
