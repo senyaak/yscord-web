@@ -58,10 +58,14 @@ class PlayerMetrics(private val registry: MeterRegistry) {
         }
     }
 
-    /** An audio request: served from the cache file or downloaded first. */
+    /**
+     * An audio HTTP request: served from the cache file or downloaded first.
+     * Counts requests, not plays: the browser fetches a track in several Range
+     * requests (and again on every seek), each one counted.
+     */
     fun audioCache(hit: Boolean) {
         Counter.builder("yscord.audio.cache")
-            .description("Audio requests by cache result")
+            .description("Audio HTTP requests (not plays) by cache result")
             .tag("result", if (hit) "hit" else "miss")
             .register(registry)
             .increment()
