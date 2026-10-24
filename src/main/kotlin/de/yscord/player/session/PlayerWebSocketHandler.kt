@@ -2,6 +2,8 @@ package de.yscord.player.session
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
+import de.yscord.player.PlayerMetrics
+import de.yscord.player.PlayerMetrics.Outcome
 import de.yscord.player.YtDlpException
 import org.slf4j.LoggerFactory
 import org.springframework.context.event.EventListener
@@ -22,10 +24,19 @@ import java.util.concurrent.ConcurrentHashMap
  * which publishes a [StateChangedEvent] that this handler broadcasts to everyone.
  */
 @Component
-class PlayerWebSocketHandler(private val service: PlayerSessionService) : TextWebSocketHandler() {
+class PlayerWebSocketHandler(
+    private val service: PlayerSessionService,
+    private val metrics: PlayerMetrics,
+) : TextWebSocketHandler() {
     private val log = LoggerFactory.getLogger(javaClass)
     private val mapper = jacksonObjectMapper()
     private val sessions = ConcurrentHashMap.newKeySet<WebSocketSession>()
+
+    init {
+        for (identity in listOf(PlayerMetrics.USER, PlayerMetrics.ANONYMOUS)) {
+            metrics.listeners(identity) { sessions.count { IdentityHandshakeInterceptor.identity(it) == identity } }
+        }
+    }
 
     override fun afterConnectionEstablished(session: WebSocketSession) {
         sessions.add(session)
@@ -36,13 +47,20 @@ class PlayerWebSocketHandler(private val service: PlayerSessionService) : TextWe
         val cmd = try {
             mapper.readValue<Command>(message.payload)
         } catch (e: Exception) {
+            metrics.command("", Outcome.REJECTED)
+            return
+        }
+        if (cmd.type !in PlayerMetrics.COMMANDS) {
+            metrics.command(cmd.type, Outcome.REJECTED)
             return
         }
         // Failures go to the requester only. Only our own exception types carry
         // messages written for users; anything else (DB, bugs) is logged and
         // answered with a fixed text so internals never leak to the client.
+        var outcome = Outcome.REJECTED
         val error = try {
             service.handle(cmd)
+            outcome = Outcome.OK
             null
         } catch (e: YtDlpException) {
             e.message
@@ -50,8 +68,10 @@ class PlayerWebSocketHandler(private val service: PlayerSessionService) : TextWe
             e.message
         } catch (e: Exception) {
             log.error("command {} failed", cmd.type, e)
+            outcome = Outcome.ERROR
             "Something went wrong."
         }
+        metrics.command(cmd.type, outcome)
         if (error != null) trySend(session, """{"error":${mapper.writeValueAsString(error)}}""")
     }
 

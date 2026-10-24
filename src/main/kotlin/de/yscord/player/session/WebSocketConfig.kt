@@ -5,11 +5,16 @@ import org.springframework.web.socket.config.annotation.EnableWebSocket
 import org.springframework.web.socket.config.annotation.WebSocketConfigurer
 import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry
 
-/** Exposes the player socket at /ws/player. Origins are open so `ng serve` can connect in dev. */
+/**
+ * Exposes the player socket at /ws/player. Origins are open so `ng serve` can
+ * connect in dev. The handshake records who connected ([IdentityHandshakeInterceptor]).
+ */
 @Configuration
 @EnableWebSocket
 class WebSocketConfig(private val handler: PlayerWebSocketHandler) : WebSocketConfigurer {
     override fun registerWebSocketHandlers(registry: WebSocketHandlerRegistry) {
-        registry.addHandler(handler, "/ws/player").setAllowedOriginPatterns("*")
+        registry.addHandler(handler, "/ws/player")
+            .addInterceptors(IdentityHandshakeInterceptor())
+            .setAllowedOriginPatterns("*")
     }
 }

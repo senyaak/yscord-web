@@ -1,12 +1,13 @@
 package de.yscord.player
 
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 
 class YtDlpServiceTest {
 
-    private val service = YtDlpService("yt-dlp")
+    private val service = YtDlpService("yt-dlp", PlayerMetrics(SimpleMeterRegistry()))
 
     @Test
     fun `free text becomes a YouTube search`() {

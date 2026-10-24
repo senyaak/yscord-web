@@ -13,6 +13,8 @@ import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
+import java.net.http.WebSocket
+import java.util.concurrent.TimeUnit
 
 /** The login plumbing as a browser sees it, against a real server. */
 @SpringBootTest(webEnvironment = RANDOM_PORT)
@@ -84,5 +86,22 @@ class AuthHttpTest(
         val public = send("GET", "/actuator/prometheus")
         assertEquals(404, public.statusCode())
         assertTrue("visitor_id" !in public.setCookies(), public.headers().toString())
+    }
+
+    @Test
+    fun `an open player socket counts as an anonymous listener`() {
+        fun anonymousListeners() = sendTo(managementPort, "GET", "/actuator/prometheus").body()
+            .lineSequence().first { it.startsWith("""yscord_listeners{identity="anonymous"}""") }
+            .substringAfterLast(' ').toDouble()
+
+        val before = anonymousListeners()
+        val socket = http.newWebSocketBuilder()
+            .buildAsync(URI("ws://localhost:$port/ws/player"), object : WebSocket.Listener {})
+            .get(5, TimeUnit.SECONDS)
+        try {
+            assertEquals(before + 1, anonymousListeners())
+        } finally {
+            socket.abort()
+        }
     }
 }

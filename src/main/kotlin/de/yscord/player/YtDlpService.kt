@@ -30,6 +30,7 @@ class YtDlpException(message: String) : RuntimeException(message)
 @Service
 class YtDlpService(
     @Value("\${player.yt-dlp-path:yt-dlp}") private val ytDlpPath: String,
+    private val metrics: PlayerMetrics,
 ) {
 
     // Only used to parse yt-dlp's JSON output — a plain mapper is enough and keeps
@@ -43,7 +44,10 @@ class YtDlpService(
      */
     fun resolve(query: String): TrackInfo {
         val target = toTarget(query)
+        return metrics.ytDlp(PlayerMetrics.YtDlpOperation.RESOLVE) { resolveTarget(target) }
+    }
 
+    private fun resolveTarget(target: String): TrackInfo {
         val result = run(
             "-j",
             "--no-playlist",

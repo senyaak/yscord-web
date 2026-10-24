@@ -20,6 +20,7 @@ import kotlin.io.path.listDirectoryEntries
 @Service
 class AudioCacheService(
     private val ytDlp: YtDlpService,
+    private val metrics: PlayerMetrics,
     @Value("\${player.cache-dir:#{systemProperties['java.io.tmpdir']}/yscord-audio}")
     private val cacheDirValue: String,
 ) {
@@ -46,11 +47,13 @@ class AudioCacheService(
     fun prepare(id: String): Path {
         require(idRegex.matches(id)) { "invalid video id" }
 
-        findCached(id)?.let { return it }
+        findCached(id)?.let { metrics.audioCache(hit = true); return it }
         // Serialize downloads of the same id so two players don't race on one file.
         synchronized(locks.computeIfAbsent(id) { Any() }) {
-            findCached(id)?.let { return it }
-            download(id)
+            // Another request may have downloaded it while this one waited.
+            findCached(id)?.let { metrics.audioCache(hit = true); return it }
+            metrics.audioCache(hit = false)
+            metrics.ytDlp(PlayerMetrics.YtDlpOperation.DOWNLOAD) { download(id) }
             return findCached(id)
                 ?: throw YtDlpException("yt-dlp produced no audio file for $id")
         }
