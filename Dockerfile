@@ -27,7 +27,7 @@ WORKDIR /app
 # release is out (see renovate.json). The k8s init container additionally runs
 # `yt-dlp -U` at pod start as a safety net between releases.
 # renovate: datasource=github-releases depName=yt-dlp/yt-dlp
-ARG YTDLP_VERSION=2026.08.19
+ARG YTDLP_VERSION=2026.10.26
 RUN apt-get update \
     && apt-get install -y --no-install-recommends ca-certificates curl \
     && curl -fsSL https://github.com/yt-dlp/yt-dlp/releases/download/${YTDLP_VERSION}/yt-dlp_linux \
